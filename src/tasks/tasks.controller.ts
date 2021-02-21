@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Catch, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, Post, Put, UseFilters } from '@nestjs/common';
 import { Task } from './shared/task';
 import { TaskService } from './shared/task.service';
 
@@ -14,8 +14,8 @@ export class TasksController {
     }
 
     @Get(":id")
-    async getById(@Param("id") id: number) : Promise<Task> {
-        return this.taskService.getById(id);
+    async getById(@Param("id") id: string) : Promise<Task | HttpException> {
+        return this.taskService.getById(id);    
     }
 
     @Post()
@@ -24,13 +24,12 @@ export class TasksController {
     }
 
     @Put(":id")
-    async update(@Param("id") id: number, @Body() task: Task): Promise<Task | {status: number, response: string}> {
-        task.id = id;
-        return this.taskService.update(task);
+    async update(@Param("id") id: string, @Body() task: Task): Promise<Task | HttpException> {
+        return this.taskService.update(id, task);
     }
 
     @Delete(":id")
-    async delete(@Param("id") id: number): Promise<{status: number, response: string}> {
+    async delete(@Param("id") id: string): Promise<any> {
         return this.taskService.delete(id);
     }
 }
