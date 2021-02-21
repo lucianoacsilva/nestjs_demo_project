@@ -1,97 +1,40 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { lstat } from 'node:fs';
 import { Task } from './task';
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
 
 @Injectable()
 export class TaskService {
-    tasks: Task[] = [
-        {
-            id: 1,
-            description: "Tarefa 1",
-            completed: true
-        },
 
-        {
-            id: 2,
-            description: "Tarefa 2",
-            completed: true
-        },
+    constructor(@InjectModel("Task") private readonly taskModel: Model<Task>) {
 
-        {
-            id: 3,
-            description: "Tarefa 3",
-            completed: false
-        },
-
-        {
-            id: 4,
-            description: "Tarefa 4",
-            completed: false
-        }
-    ]
-
-    getAll() {
-        return this.tasks;
     }
 
-    getById(id: number) {
-        const task = this.tasks.find((task) => task.id == id);
-
-        return task;
+    async getAll() {
+        return await this.taskModel.find().exec();    
     }
 
-    create(task: Task) {
-        let lastId: number = 0;
-
-        if (this.tasks.length > 0) {
-            lastId = this.tasks[this.tasks.length - 1].id;
-            task.id = lastId + 1;
-        }
-
-        this.tasks.push(task);
-
-        return task as Task;
+    async getById(id: string) {
+        return await this.taskModel.findById(id).exec();
+    }
+    
+    async create(task: Task) {
+        const createdTask = new this.taskModel(task);
+        return await createdTask.save();
     }
 
-    update(task: Task) {
-        let targetTask = this.getById(task.id);
+    async update(id: string, task: Task) {
+        await this.taskModel.updateOne({
+            _id: id
+        }, task).exec();
 
-        if (targetTask) {
-            targetTask = {
-                ...targetTask,
-                description: task.description,
-                completed: task.completed
-            }
-
-            this.tasks[task.id - 1] = targetTask;
-
-            return targetTask; 
-        } else {
-            return {
-                status: 400,
-                response: "Task not found!"
-            } 
-        }
+        return this.getById(id);
     }
 
-    delete(id: number): {status: number, response: string} {
-        const targetTask = this.getById(id);
-
-        console.log("Aaaa");
-        console.log(targetTask);
-
-        if (targetTask) {
-            this.tasks.splice(id - 1, 1);
-
-            return {
-                status: 200,
-                response: "Task deleted successfully!"
-            }
-        } else {
-            return {
-                status: 400,
-                response: "Task not found!"
-            }
-        }
+    async delete(id: string) {
+        await this.taskModel.deleteOne({
+            _id: id
+        }).exec();
     }
 }
