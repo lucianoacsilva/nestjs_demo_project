@@ -9,7 +9,7 @@ export class TasksController {
     }
     
     @Get()
-    async getAll() : Promise<Task[]> {
+    async getAll() : Promise<Task[] | HttpException> {
         return this.taskService.getAll();
     }
 

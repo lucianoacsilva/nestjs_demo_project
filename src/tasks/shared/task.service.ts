@@ -12,11 +12,29 @@ export class TaskService {
     }
 
     async getAll() {
-        return await this.taskModel.find().exec();    
+        const allTasks = await this.taskModel.find().exec();    
+
+        if (!allTasks) {
+            throw new HttpException({
+                status: HttpStatus.INTERNAL_SERVER_ERROR,
+                message: "Could not fetch resource!"
+            }, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        return allTasks;
     }
 
     async getById(id: string) {
-        return await this.taskModel.findById(id).exec();
+        const targetTask: Task = await this.taskModel.findById(id).exec();
+
+        if (!targetTask) {
+            throw new HttpException({
+                status: HttpStatus.NOT_FOUND,
+                message: "Task not found!"
+            }, HttpStatus.NOT_FOUND);
+        }
+
+        return targetTask;
     }
     
     async create(task: Task) {
@@ -25,15 +43,31 @@ export class TaskService {
     }
 
     async update(id: string, task: Task) {
-        await this.taskModel.updateOne({
+        const targetTask: Task = await this.taskModel.updateOne({
             _id: id
         }, task).exec();
+        
+        if (!targetTask) {
+            throw new HttpException({
+                status: HttpStatus.NOT_FOUND,
+                message: "Task not found!"
+            }, HttpStatus.NOT_FOUND);
+        }
 
         return this.getById(id);
     }
 
     async delete(id: string) {
-        await this.taskModel.deleteOne({
+        const searchTask = await this.getById(id);
+
+        if (!searchTask) {
+            throw new HttpException({
+                status: HttpStatus.NOT_FOUND,
+                message: "Task not found!"
+            }, HttpStatus.NOT_FOUND);
+        }
+
+        return await this.taskModel.deleteOne({
             _id: id
         }).exec();
     }
